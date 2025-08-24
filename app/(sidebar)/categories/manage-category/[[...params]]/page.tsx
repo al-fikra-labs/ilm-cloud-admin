@@ -25,6 +25,7 @@ const formSchema = z.object({
         message: "Name must be at least 2 characters."
     }).max(50),
     name_ml: z.string().max(50),
+    thumbnail: z.string(),
 })
 
 export default function CategoryPage() {
@@ -55,6 +56,7 @@ export default function CategoryPage() {
         defaultValues: {
             name_en: "",
             name_ml: "",
+            thumbnail: ""
         }
     })
 
@@ -87,6 +89,7 @@ export default function CategoryPage() {
                     console.log(data)
                     form.setValue('name_en', data.name_en || "")
                     form.setValue('name_ml', data.name_ml || "")
+                    form.setValue('thumbnail', data.thumbnail || "")
                     if (data?.mediaToCategory) {
                         const medias = data.mediaToCategory.map((m) => ({
                             name: m.mediaId.name_en,
@@ -143,7 +146,7 @@ export default function CategoryPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                         <ListMusic className="h-8 w-8" />
-                        {`Categories ${params.id? ("/ "+ params.id): ""}`}
+                        {`Categories ${params.id ? ("/ " + params.id) : ""}`}
                     </h1>
                 </div>
             </div>
@@ -169,6 +172,19 @@ export default function CategoryPage() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Name (ML)</FormLabel>
+                                    <FormControl>
+                                        <Input  {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="thumbnail"
+                            render={({ field }) => (
+                                <FormItem className="col-span-2">
+                                    <FormLabel>Thumbnail URL</FormLabel>
                                     <FormControl>
                                         <Input  {...field} />
                                     </FormControl>
@@ -305,7 +321,7 @@ function AddMediaToCategoryBtn({ categoryId, mediaId }: { categoryId: string, me
     }
 
     return (
-        <Button  className="cursor-pointer bg-green-500" disabled={loading} onClick={add} >
+        <Button className="cursor-pointer bg-green-500" disabled={loading} onClick={add} >
             {loading ? <Loader2Icon className="animate-spin" /> : <Plus />}
         </Button>
     )

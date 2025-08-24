@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react"
 import { Plus, ListMusic, MoveRight, Loader2Icon, FilePlus2, CircleMinus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { AdminLayout } from "@/components/admin-layout"
-import { PlaylistsTable } from "@/components/playlists/playlists-table"
-import { PlaylistForm } from "@/components/playlists/playlist-form"
-import { DeletePlaylistDialog } from "@/components/playlists/delete-playlist-dialog"
-import { PlaylistMediaDialog } from "@/components/playlists/playlist-media-dialog"
-import { api, Media, type Playlist } from "@/lib/api"
+import { api, Media, Teacher, type Playlist } from "@/lib/api"
 import { useParams, useRouter } from "next/navigation"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -19,20 +14,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { Clock, Search, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 
 const formSchema = z.object({
     name_en: z.string().min(2, {
         message: "Name must be at least 2 characters."
     }).max(50),
     name_ml: z.string().max(50),
+    totalDuration: z.string(),
+    teacherId: z.string().pipe(z.string().transform(val => val.length == 0 ? undefined : val)),
     description_en: z.string(),
     description_ml: z.string(),
-    isActive: z.boolean()
+    isActive: z.boolean(),
+    thumbnail: z.string(),
 })
 
 export default function PlaylistsPage() {
-    const [showMediaDialog, setShowMediaDialog] = useState(false)
-    const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
     const [media, setMedia] = useState<Media[]>([])
     const [loadingMedia, setLoadingMedia] = useState(false)
     const [mediaSearch, setMediaSearch] = useState("")
@@ -40,6 +37,10 @@ export default function PlaylistsPage() {
     const [myMedias, setMyMedias] = useState<any[]>([])
     const [myMediIds, setMyMediIds] = useState<string[]>([])
     const [debouncedQuery, setDebouncedQuery] = useState("");
+    const [data, setData] = useState<any>(null)
+
+    const [teachers, setTeachers] = useState<Teacher[]>([])
+    const [loadingTeachers, setLoadingTeachers] = useState(false)
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -55,11 +56,6 @@ export default function PlaylistsPage() {
     const params = { id: ids?.params?.[0] }
     const router = useRouter()
 
-    const handleViewMedia = (playlist: Playlist) => {
-        setSelectedPlaylist(playlist)
-        setShowMediaDialog(true)
-    }
-
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -67,8 +63,11 @@ export default function PlaylistsPage() {
             name_ml: "",
             description_en: "",
             description_ml: "",
+            totalDuration: "",
+            teacherId: "",
+            thumbnail: "",
             isActive: true
-        }
+        },
     })
 
 
@@ -98,10 +97,14 @@ export default function PlaylistsPage() {
                     // setLoadingMedia(true)
                     const data = await api.getPlaylistsById(params.id as string) // page, limit
                     console.log(data)
+                    setData(data)
                     form.setValue('name_en', data.name_en || "")
                     form.setValue('name_ml', data.name_ml || "")
                     form.setValue("description_en", data.description_en || "")
                     form.setValue("description_ml", data.description_ml || "")
+                    form.setValue("totalDuration", data.totalDuration || "")
+                    form.setValue("thumbnail", data.thumbnail || "")
+
                     if (data?.mediaToPlaylist) {
                         const medias = data.mediaToPlaylist.map((m) => ({
                             name: m.mediaId.name_en,
@@ -122,6 +125,12 @@ export default function PlaylistsPage() {
             fetchData()
         }
     }, [])
+
+    useEffect(() => {
+        if (params.id && !loadingTeachers && data) {
+            form.setValue('teacherId', data.teacherId || "")
+        }
+    }, [loadingTeachers, data])
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
@@ -150,6 +159,21 @@ export default function PlaylistsPage() {
         })
     }
 
+    useEffect(() => {
+        const fetchTeachers = async () => {
+            try {
+                setLoadingTeachers(true)
+                const data = await api.getTeachers()
+                setTeachers(data)
+            } catch (error) {
+                console.error("Error fetching teachers:", error)
+            } finally {
+                setLoadingTeachers(false)
+            }
+        }
+        fetchTeachers()
+    }, [])
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -157,7 +181,7 @@ export default function PlaylistsPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                         <ListMusic className="h-8 w-8" />
-                        {`Playlists ${params.id? ("/ "+ params.id): ""}`}
+                        {`Playlists ${params.id ? ("/ " + params.id) : ""}`}
                     </h1>
                 </div>
             </div>
@@ -211,6 +235,65 @@ export default function PlaylistsPage() {
                                     <FormLabel>Description (ML)</FormLabel>
                                     <FormControl>
                                         <Textarea  {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="totalDuration"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Total Duration</FormLabel>
+                                    <FormControl>
+                                        <Input  {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="teacherId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className={field.value}>Teacher</FormLabel>
+                                    <Select
+                                        {...field}
+                                        onValueChange={field.onChange}
+                                        value={field.value}
+                                    // defaultValue={field.value}
+                                    >
+
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={loadingTeachers ? "Loading..." : "Select teacher"} />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {teachers.map((teacher) => (
+                                                <SelectItem key={teacher.id} value={teacher.id}>
+                                                    {teacher.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="thumbnail"
+                            render={({ field }) => (
+                                <FormItem className="col-span-2">
+                                    <FormLabel>Thumbnail URL</FormLabel>
+                                    <FormControl>
+                                        <Input  {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -346,7 +429,7 @@ function AddMediaToPlaylistBtn({ playlistId, mediaId }: { playlistId: string, me
     }
 
     return (
-        <Button  className="cursor-pointer bg-green-500" disabled={loading} onClick={add} >
+        <Button className="cursor-pointer bg-green-500" disabled={loading} onClick={add} >
             {loading ? <Loader2Icon className="animate-spin" /> : <Plus />}
         </Button>
     )

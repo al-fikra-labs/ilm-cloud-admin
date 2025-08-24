@@ -39,7 +39,8 @@ const formSchema = z.object({
   }).max(50),
   name_ml: z.string().max(50),
   bio_en: z.string(),
-  bio_ml: z.string()
+  bio_ml: z.string(),
+  thumbnail: z.string()
 })
 
 export function TeacherForm({ teacher, open, onOpenChange, onSuccess, clearTeacher }: TeacherFormProps) {
@@ -50,7 +51,8 @@ export function TeacherForm({ teacher, open, onOpenChange, onSuccess, clearTeach
       name_en: "",
       name_ml: "",
       bio_en: "",
-      bio_ml: ""
+      bio_ml: "",
+      thumbnail: ""
     }
   })
 
@@ -58,7 +60,7 @@ export function TeacherForm({ teacher, open, onOpenChange, onSuccess, clearTeach
 
   const fetchTeachers = async (id: string) => {
     const token = Cookies.get('token')
-    if(!token) return;
+    if (!token) return;
     try {
       setLoading(true)
       const data: EditTeacher = await api.getTeacher(id, token)
@@ -66,6 +68,7 @@ export function TeacherForm({ teacher, open, onOpenChange, onSuccess, clearTeach
       form.setValue("name_ml", data.name_ml)
       form.setValue("bio_en", data.bio_en)
       form.setValue("bio_ml", data.bio_ml)
+      form.setValue("thumbnail", data.thumbnail)
     } catch (error) {
       console.error("Error fetching teachers:", error)
     } finally {
@@ -94,7 +97,7 @@ export function TeacherForm({ teacher, open, onOpenChange, onSuccess, clearTeach
       form.reset()
     } catch (error) {
       console.error("Error saving teacher:", error)
-    }finally{
+    } finally {
       setLoading(false)
     }
   }
@@ -159,6 +162,20 @@ export function TeacherForm({ teacher, open, onOpenChange, onSuccess, clearTeach
                     <FormLabel>Bio Malayalam</FormLabel>
                     <FormControl>
                       <Textarea  {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="thumbnail"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Thumbnail URL</FormLabel>
+                    <FormControl>
+                      <Input  {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

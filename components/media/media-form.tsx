@@ -47,7 +47,8 @@ const formSchema = z.object({
   // .or(z.object({ value: z.string().uuid(), label: z.string() })),
   fileUrl: z.string().min(1),
   duration: z.string(),
-  isActive: z.boolean()
+  isActive: z.boolean(),
+  thumbnail: z.string(),
 })
 
 
@@ -64,6 +65,7 @@ export function MediaForm({ media, open, onOpenChange, onSuccess, teachers, load
       description_ml: "",
       teacherId: "",
       fileUrl: "",
+      thumbnail: "",
       duration: "",
       isActive: true
     }
@@ -76,6 +78,7 @@ export function MediaForm({ media, open, onOpenChange, onSuccess, teachers, load
       form.setValue('name_en', data.name_en || "")
       form.setValue('name_ml', data.name_ml || "")
       form.setValue('fileUrl', data.fileUrl || "")
+      form.setValue('thumbnail', data.thumbnail || "")
       form.setValue('teacherId', data.teacherId || "")
       form.setValue('description_en', data.description_en || "")
       form.setValue('description_ml', data.description_ml || "")
@@ -112,7 +115,7 @@ export function MediaForm({ media, open, onOpenChange, onSuccess, teachers, load
       form.reset()
     } catch (error) {
       console.error("Error saving media:", error)
-    } finally{
+    } finally {
       setLoading(false)
     }
   }
@@ -195,6 +198,20 @@ export function MediaForm({ media, open, onOpenChange, onSuccess, teachers, load
                 render={({ field }) => (
                   <FormItem className="col-span-2">
                     <FormLabel>File URL</FormLabel>
+                    <FormControl>
+                      <Input  {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="thumbnail"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Thumbnail URL</FormLabel>
                     <FormControl>
                       <Input  {...field} />
                     </FormControl>

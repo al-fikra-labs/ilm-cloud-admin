@@ -1,5 +1,5 @@
 // const API_BASE = "https://947eb8e1-c73e-42c4-934a-6a4ffd00fda7.mock.pstmn.io"
-const API_BASE = "http://localhost:4000/api/backend"
+const API_BASE = process.env.NEXT_PUBLIC_BASE_URL
 
 export interface User {
   id: string
@@ -22,6 +22,7 @@ export interface EditTeacher {
   bio_en: string
   bio_ml: string
   createdAt: string
+  thumbnail: string
 }
 
 export interface Media {
@@ -43,6 +44,7 @@ export interface EditMedia {
   description_ml: string
   name_ml: string
   fileUrl: string
+  thumbnail: string
   duration: string
   teacherId: string
   isActive: boolean
@@ -66,7 +68,10 @@ export interface EditPlaylist {
   name_ml: string
   description_en: string
   description_ml: string
+  totalDuration: string
+  teacherId?: string
   createdAt: string
+  thumbnail: string
   mediaToPlaylist?: {
     mediaId: EditMedia
   }[]
@@ -83,6 +88,7 @@ export interface EditCategory {
   id: string
   name_en: string
   name_ml: string
+  thumbnail: string
   createdAt: string
   mediaToCategory?: {
     mediaId: EditMedia
@@ -147,11 +153,11 @@ export const api = {
   },
 
   // Teachers
-  async getTeachers(token:string): Promise<Teacher[]> {
+  async getTeachers(): Promise<Teacher[]> {
     const response = await fetch(`${API_BASE}/teachers`, {
-      headers: {
-        authorization: `Bearer ${token}`
-      }
+      // headers: {
+      //   authorization: `Bearer ${token}`
+      // }
     })
     if (!response.ok) throw new Error("Failed to fetch teachers")
     return response.json()

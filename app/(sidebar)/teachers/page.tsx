@@ -23,7 +23,7 @@ export default function TeachersPage() {
     if(!token) return;
     try {
       setLoading(true)
-      const data = await api.getTeachers(token)
+      const data = await api.getTeachers()
       setTeachers(data)
     } catch (error) {
       console.error("Error fetching teachers:", error)
